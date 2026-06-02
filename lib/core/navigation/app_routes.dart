@@ -4,6 +4,8 @@ import '../../features/users/presentation/pages/register_page.dart';
 import '../../features/habits/presentation/screens/habits_screen.dart';
 
 class AppRoutes {
+
+
   static const String login = '/';
   static const String register = '/register';
   static const String habits = '/habits';

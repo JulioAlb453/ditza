@@ -1,4 +1,6 @@
+import 'package:ditza/features/auth/presentation/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/auth_container.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -19,6 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
+    final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -82,20 +85,50 @@ class _RegisterPageState extends State<RegisterPage> {
                 onTapDown: (_) => setState(() => _isButtonPressed = true),
                 onTapUp: (_) => setState(() => _isButtonPressed = false),
                 onTapCancel: () => setState(() => _isButtonPressed = false),
-                onTap: () {
-                  // TODO: Register logic
+                onTap: () async {
+                  final alias = _aliasController.text.trim();
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+
+                  if (alias.isEmpty || email.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Por favor, completa todos los campos')),
+                    );
+                    return;
+                  }
+
+                  final success = await context.read<AuthProvider>().register(
+                    alias,
+                    email,
+                    password,
+                  );
+
+                  if (mounted) {
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Registro exitoso. ¡Inicia sesión!')),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(authProvider.errorMessage ?? 'Error al registrarse')),
+                      );
+                    }
+                  }
                 },
                 child: AuthContainer(
                   isPressed: _isButtonPressed,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   child: Center(
-                    child: Text(
-                      'Registrarse',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
+                    child: authProvider.isLoading
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            'Registrarse',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
                   ),
                 ),
               ),

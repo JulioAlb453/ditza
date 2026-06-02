@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/shared/enums.dart';
 import '../provider/habitProvider.dart';
 import '../widgets/habit_card.dart';
 
@@ -38,47 +39,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: habitProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : habitProvider.errorMessage != null
-              ? Center(child: Text(habitProvider.errorMessage!))
-              : habitProvider.habits.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Aún no tienes hábitos.\n¡Crea uno nuevo!',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    )
-                  : CustomScrollView(
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: _buildSummaryCard(context, colorScheme),
-                          ),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final habit = habitProvider.habits[index];
-                              return HabitCard(
-                                habit: habit,
-                                onComplete: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('¡${habit.title} completado!')),
-                                  );
-                                },
-                              );
-                            },
-                            childCount: habitProvider.habits.length,
-                          ),
-                        ),
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: 100),
-                        ),
-                      ],
-                    ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateHabitDialog(context),
         label: const Text('Nuevo Hábito'),
@@ -86,7 +46,59 @@ class _HabitsScreenState extends State<HabitsScreen> {
         backgroundColor: colorScheme.primaryContainer,
         foregroundColor: colorScheme.onPrimaryContainer,
       ),
+      body: SafeArea(
+        child: _buildBody(habitProvider, colorScheme),
+      ),
     );
+  }
+
+  Widget _buildBody(HabitProvider provider, ColorScheme colorScheme) {
+    switch (provider.state) {
+      case ViewState.initial:
+      case ViewState.loading:
+        return const Center(child: CircularProgressIndicator());
+      case ViewState.error:
+        return Center(child: Text(provider.errorMessage ?? 'Error desconocido'));
+      case ViewState.loaded:
+        if (provider.habits.isEmpty) {
+          return Center(
+            child: Text(
+              'Aún no tienes hábitos.\n¡Crea uno nuevo!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          );
+        }
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: _buildSummaryCard(context, colorScheme),
+              ),
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final habit = provider.habits[index];
+                  return HabitCard(
+                    habit: habit,
+                    onComplete: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('¡${habit.title} completado!')),
+                      );
+                    },
+                  );
+                },
+                childCount: provider.habits.length,
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 100),
+            ),
+          ],
+        );
+    }
   }
 
   Widget _buildSummaryCard(BuildContext context, ColorScheme colorScheme) {
@@ -107,14 +119,16 @@ class _HabitsScreenState extends State<HabitsScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem(context, 'Total', '5', Icons.list_alt, colorScheme),
-          _buildStatItem(context, 'Hoy', '3', Icons.check_circle_outline, colorScheme),
+          _buildStatItem(
+              context, 'Hoy', '3', Icons.check_circle_outline, colorScheme),
           _buildStatItem(context, 'Racha', '12', Icons.bolt, colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon, ColorScheme colorScheme) {
+  Widget _buildStatItem(BuildContext context, String label, String value,
+      IconData icon, ColorScheme colorScheme) {
     return Column(
       children: [
         Icon(icon, color: colorScheme.onTertiaryContainer),
