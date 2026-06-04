@@ -22,8 +22,8 @@ class HabitRepositoryImpl implements HabitRepository {
   }
 
   @override
-  Future<Habit> createHabit(String title) async {
-    final response = await api.post('/habits', body: {'title': title});
+  Future<Habit> createHabit(Map<String, dynamic> habitData) async {
+    final response = await api.post('/habits', body: habitData);
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return HabitModel.fromJson(jsonDecode(response.body));

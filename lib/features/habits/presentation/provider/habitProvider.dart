@@ -55,13 +55,13 @@ class HabitProvider with ChangeNotifier {
     }
   }
 
-  Future<void> registerHabit(String title) async {
+  Future<void> registerHabit(Map<String, dynamic> habitData) async {
     _state = HabitState.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final newHabit = await createHabit(title);
+      final newHabit = await createHabit(habitData);
       _habits.add(newHabit);
       _state = HabitState.loaded;
     } catch (e) {

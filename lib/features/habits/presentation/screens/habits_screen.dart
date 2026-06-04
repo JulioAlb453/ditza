@@ -335,7 +335,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ElevatedButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
-                context.read<HabitProvider>().registerHabit(controller.text);
+                context.read<HabitProvider>().registerHabit({
+                  'title': controller.text,
+                });
                 Navigator.pop(context);
               }
             },
