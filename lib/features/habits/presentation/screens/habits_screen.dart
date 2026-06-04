@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/shared/enums.dart';
 import '../provider/habitProvider.dart';
 import '../widgets/habit_card.dart';
 
@@ -35,12 +34,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   Widget _buildBody(HabitProvider provider, ColorScheme colorScheme) {
     switch (provider.state) {
-      case ViewState.initial:
-      case ViewState.loading:
+      case HabitState.initial:
+      case HabitState.loading:
         return const Center(child: CircularProgressIndicator());
-      case ViewState.error:
+      case HabitState.error:
         return Center(child: Text(provider.errorMessage ?? 'Error desconocido'));
-      case ViewState.loaded:
+      case HabitState.loaded:
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [

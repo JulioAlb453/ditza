@@ -1,55 +1,56 @@
 import 'package:flutter/material.dart';
-import '../../../../core/shared/enums.dart';
 import '../../domain/repository/auth_repository.dart';
+
+enum AuthState { initial, loading, loaded, error }
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository authRepository;
   
-  ViewState _state = ViewState.initial;
+  AuthState _state = AuthState.initial;
   String? _errorMessage;
   bool _isAuthenticated = false;
 
   AuthProvider({required this.authRepository});
 
-  ViewState get state => _state;
+  AuthState get state => _state;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
 
-  bool get isLoading => _state == ViewState.loading;
+  bool get isLoading => _state == AuthState.loading;
 
   Future<bool> login(String email, String password) async {
-    _state = ViewState.loading;
+    _state = AuthState.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
       await authRepository.login(email, password);
       _isAuthenticated = true;
-      _state = ViewState.loaded;
+      _state = AuthState.loaded;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _isAuthenticated = false;
-      _state = ViewState.error;
+      _state = AuthState.error;
       notifyListeners();
       return false;
     }
   }
 
   Future<bool> register(String alias, String email, String password) async {
-    _state = ViewState.loading;
+    _state = AuthState.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
       await authRepository.register(alias, email, password);
-      _state = ViewState.loaded;
+      _state = AuthState.loaded;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      _state = ViewState.error;
+      _state = AuthState.error;
       notifyListeners();
       return false;
     }
@@ -58,7 +59,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     await authRepository.logout();
     _isAuthenticated = false;
-    _state = ViewState.initial;
+    _state = AuthState.initial;
     notifyListeners();
   }
 }
