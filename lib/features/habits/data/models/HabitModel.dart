@@ -12,7 +12,7 @@ class HabitModel extends Habit {
 
   factory HabitModel.fromJson(Map<String, dynamic> json) {
     return HabitModel(
-      id: json['habit_id'] as String,
+      id: json['habit_id'].toString(),
       title: json['title'] as String,
       isActive: json['is_active'] as bool? ?? true,
       currentStreak: json['current_streak'] as int? ?? 0,

@@ -12,6 +12,21 @@ class HabitProvider with ChangeNotifier {
   ViewState _state = ViewState.initial;
   String? _errorMessage;
 
+  int get totalHabits => _habits.length;
+  int get completedToday => _habits.where((h) {
+    if (h.lastCompleteDate == null) return false;
+    final now = DateTime.now();
+    return h.lastCompleteDate!.year == now.year &&
+        h.lastCompleteDate!.month == now.month &&
+        h.lastCompleteDate!.day == now.day;
+  }).length;
+
+  int get maxStreak => _habits.isEmpty
+      ? 0
+      : _habits
+      .map((h) => h.currentStreak)
+      .reduce((a, b) => a > b ? a : b);
+
   HabitProvider({
     required this.getHabits,
     required this.createHabit,

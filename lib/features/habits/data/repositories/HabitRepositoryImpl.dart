@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'package:ditza/core/network/api_client.dart';
+import 'package:ditza/core/network/auth_api_client.dart';
 import '../../domain/entity/habit.dart';
 import '../../domain/repository/HabitRepository.dart';
 import '../models/HabitModel.dart';
 
 class HabitRepositoryImpl implements HabitRepository {
-  final ApiClient api;
+  final AuthApiClient api;
 
   HabitRepositoryImpl({required this.api});
 
