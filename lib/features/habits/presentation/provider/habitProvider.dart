@@ -3,7 +3,7 @@ import 'package:ditza/features/habits/domain/usecases/create_habit.dart';
 import 'package:ditza/features/habits/domain/usecases/get_habits.dart';
 import 'package:flutter/material.dart';
 
-enum HabitState { initial, loading, loaded, error }
+enum HabitState { initial, loading, loaded, error, success }
 
 class HabitProvider with ChangeNotifier {
   final GetHabits getHabits;
@@ -63,13 +63,18 @@ class HabitProvider with ChangeNotifier {
     try {
       final newHabit = await createHabit(habitData);
       _habits.add(newHabit);
-      _state = HabitState.loaded;
+      _state = HabitState.success;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      _state = HabitState.error;
+      _state = HabitState.loaded;
       rethrow; 
     } finally {
       notifyListeners();
     }
+  }
+
+  void resetState() {
+    _state = HabitState.loaded;
+    notifyListeners();
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/shared/widgets/app_error_widget.dart';
+import '../../../../core/shared/widgets/app_success_widget.dart';
+import '../../../../core/shared/widgets/app_warning_widget.dart';
 import '../provider/habitProvider.dart';
 import '../widgets/habit_card.dart';
 
@@ -45,6 +47,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
             onRetry: () => provider.fetchHabits(),
           ),
         );
+      case HabitState.success:
       case HabitState.loaded:
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -503,36 +506,75 @@ class _HabitsScreenState extends State<HabitsScreen> {
                                     final title = titleController.text.trim();
                                     final description = descController.text.trim();
                                     final targetCountText = targetCountController.text.trim();
+
+                                    if (title.isEmpty) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => AppWarningWidget(
+                                          message: 'El título del hábito es obligatorio.',
+                                          onDismiss: () => Navigator.pop(context),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    if (targetCountText.isEmpty) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => AppWarningWidget(
+                                          message: 'Por favor, define una meta numérica.',
+                                          onDismiss: () => Navigator.pop(context),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
                                     final targetCount = int.tryParse(targetCountText) ?? 1;
 
-                                    if (title.isNotEmpty) {
-                                      final habitData = {
-                                        'title': title,
-                                        'description': description,
-                                        'category': selectedCategory.toLowerCase(),
-                                        'color': selectedColor,
-                                        'frequency': selectedFrequency == 'Diaria' ? 'daily' : 'weekly',
-                                        'target_count': targetCount,
-                                        'target_unit': selectedUnit.trim(),
-                                        'difficulty': selectedDifficulty == 'Medio' ? 'medium' : 'easy',
-                                        'reminder_time': '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
-                                      };
-                                      
-                                      try {
-                                        await context.read<HabitProvider>().registerHabit(habitData);
-                                        if (mounted) Navigator.pop(context);
-                                      } catch (e) {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              backgroundColor: Colors.transparent,
-                                              elevation: 0,
-                                              content: AppErrorWidget(
-                                                message: e.toString().replaceAll('Exception: ', ''),
-                                              ),
-                                            ),
-                                          );
-                                        }
+                                    final habitData = {
+                                      'title': title,
+                                      'description': description,
+                                      'category': selectedCategory.toLowerCase(),
+                                      'color': selectedColor,
+                                      'frequency': selectedFrequency == 'Diaria' ? 'daily' : 'weekly',
+                                      'target_count': targetCount,
+                                      'target_unit': selectedUnit.trim(),
+                                      'difficulty': selectedDifficulty == 'Medio' ? 'medium' : 'easy',
+                                      'reminder_time': '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                                    };
+                                    
+                                    try {
+                                      await context.read<HabitProvider>().registerHabit(habitData);
+                                      if (mounted) {
+                                        Navigator.pop(context); // Cierra el diálogo de creación
+                                        
+                                        // Muestra BottomSheet de Éxito
+                                        showModalBottomSheet(
+                                          context: context,
+                                          backgroundColor: Colors.transparent,
+                                          barrierColor: Colors.black.withOpacity(0.2),
+                                          builder: (context) => AppSuccessWidget(
+                                            message: 'Tu nuevo hábito "${title}" ha sido creado con éxito.',
+                                            onDismiss: () {
+                                              Navigator.pop(context);
+                                              context.read<HabitProvider>().resetState();
+                                            },
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          backgroundColor: Colors.transparent,
+                                          barrierColor: Colors.black.withOpacity(0.2),
+                                          builder: (context) => AppErrorWidget(
+                                            message: e.toString().replaceAll('Exception: ', ''),
+                                            onRetry: () => Navigator.pop(context),
+                                          ),
+                                        );
                                       }
                                     }
                                   },
