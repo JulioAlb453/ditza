@@ -1,6 +1,7 @@
 import 'package:ditza/features/habits/domain/entity/habit.dart';
 import 'package:ditza/features/habits/domain/usecases/create_habit.dart';
 import 'package:ditza/features/habits/domain/usecases/get_habits.dart';
+import 'package:ditza/features/habits/domain/usecases/delete_habit.dart';
 import 'package:flutter/material.dart';
 
 enum HabitState { initial, loading, loaded, error, success }
@@ -8,6 +9,7 @@ enum HabitState { initial, loading, loaded, error, success }
 class HabitProvider with ChangeNotifier {
   final GetHabits getHabits;
   final CreateHabit createHabit;
+  final DeleteHabit deleteHabit;
 
   List<Habit> _habits = [];
   HabitState _state = HabitState.initial;
@@ -31,6 +33,7 @@ class HabitProvider with ChangeNotifier {
   HabitProvider({
     required this.getHabits,
     required this.createHabit,
+    required this.deleteHabit,
   });
 
   List<Habit> get habits => _habits;
@@ -68,6 +71,21 @@ class HabitProvider with ChangeNotifier {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _state = HabitState.loaded;
       rethrow; 
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeHabit(String id) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await deleteHabit(id);
+      _habits.removeWhere((h) => h.id == id);
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      rethrow;
     } finally {
       notifyListeners();
     }

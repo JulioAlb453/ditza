@@ -115,6 +115,34 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           SnackBar(content: Text('¡${habit.title} completado!')),
                         );
                       },
+                      onDelete: () async {
+                        final habitTitle = habit.title;
+                        try {
+                          await context.read<HabitProvider>().removeHabit(habit.id);
+                          if (mounted) {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              barrierColor: Colors.black.withOpacity(0.2),
+                              builder: (ctx) => AppSuccessWidget(
+                                message: 'El hábito "$habitTitle" ha sido eliminado.',
+                                onDismiss: () => Navigator.pop(ctx),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              builder: (ctx) => AppErrorWidget(
+                                message: e.toString().replaceAll('Exception: ', ''),
+                                onRetry: () => Navigator.pop(ctx),
+                              ),
+                            );
+                          }
+                        }
+                      },
                     );
                   },
                   childCount: provider.habits.length,

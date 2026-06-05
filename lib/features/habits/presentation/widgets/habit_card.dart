@@ -4,11 +4,13 @@ import '../../domain/entity/habit.dart';
 class HabitCard extends StatelessWidget {
   final Habit habit;
   final VoidCallback? onComplete;
+  final VoidCallback? onDelete;
 
   const HabitCard({
     super.key,
     required this.habit,
     this.onComplete,
+    this.onDelete,
   });
 
   @override
@@ -106,8 +108,33 @@ class HabitCard extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.close,
-              color: colorScheme.onSurface.withOpacity(0.1), size: 18),
+          GestureDetector(
+            onTap: onDelete,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withOpacity(0.05),
+                    offset: const Offset(2, 2),
+                    blurRadius: 4,
+                  ),
+                  const BoxShadow(
+                    color: Colors.white,
+                    offset: Offset(-2, -2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.delete_outline,
+                color: colorScheme.error.withOpacity(0.5),
+                size: 20,
+              ),
+            ),
+          ),
         ],
       ),
     );
