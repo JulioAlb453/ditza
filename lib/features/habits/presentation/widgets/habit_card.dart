@@ -5,12 +5,14 @@ class HabitCard extends StatelessWidget {
   final Habit habit;
   final VoidCallback? onComplete;
   final VoidCallback? onDelete;
+  final VoidCallback? onEdit;
 
   const HabitCard({
     super.key,
     required this.habit,
     this.onComplete,
     this.onDelete,
+    this.onEdit,
   });
 
   @override
@@ -108,6 +110,34 @@ class HabitCard extends StatelessWidget {
               ],
             ),
           ),
+          GestureDetector(
+            onTap: onEdit,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withOpacity(0.05),
+                    offset: const Offset(2, 2),
+                    blurRadius: 4,
+                  ),
+                  const BoxShadow(
+                    color: Colors.white,
+                    offset: Offset(-2, -2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.edit_outlined,
+                color: colorScheme.primary.withOpacity(0.5),
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: onDelete,
             child: Container(

@@ -6,7 +6,7 @@ class UpdateHabit {
 
   UpdateHabit(this.repository);
 
-  Future<Habit> call(String id) async {
-    return await repository.updateHabit(id);
+  Future<Habit> call(String id, Map<String, dynamic> habitData) async {
+    return await repository.updateHabit(id, habitData);
   }
 }

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/shared/shared_prefs_service.dart';
+import '../../../../core/shared/auth_service.dart';
 import '../../domain/repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient api;
-  final SharedPreferencesService authService;
+  final AuthService authService;
 
   AuthRepositoryImpl({required this.api, required this.authService});
 

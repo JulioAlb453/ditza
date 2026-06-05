@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/shared/widgets/app_error_widget.dart';
 import '../../../../core/shared/widgets/app_success_widget.dart';
 import '../../../../core/shared/widgets/app_warning_widget.dart';
+import '../../domain/entity/habit.dart';
 import '../provider/habitProvider.dart';
 import '../widgets/habit_card.dart';
 
@@ -115,6 +116,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           SnackBar(content: Text('¡${habit.title} completado!')),
                         );
                       },
+                      onEdit: () => _showEditHabitDialog(context, habit),
                       onDelete: () async {
                         final habitTitle = habit.title;
                         try {
@@ -149,7 +151,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 ),
               ),
 
-            // Bottom Button
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -576,15 +577,285 @@ class _HabitsScreenState extends State<HabitsScreen> {
                                     try {
                                       await context.read<HabitProvider>().registerHabit(habitData);
                                       if (mounted) {
-                                        Navigator.pop(context); // Cierra el diálogo de creación
+                                        Navigator.pop(context);
                                         
-                                        // Muestra BottomSheet de Éxito
                                         showModalBottomSheet(
                                           context: context,
                                           backgroundColor: Colors.transparent,
                                           barrierColor: Colors.black.withOpacity(0.2),
                                           builder: (context) => AppSuccessWidget(
                                             message: 'Tu nuevo hábito "${title}" ha sido creado con éxito.',
+                                            onDismiss: () {
+                                              Navigator.pop(context);
+                                              context.read<HabitProvider>().resetState();
+                                            },
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          backgroundColor: Colors.transparent,
+                                          barrierColor: Colors.black.withOpacity(0.2),
+                                          builder: (context) => AppErrorWidget(
+                                            message: e.toString().replaceAll('Exception: ', ''),
+                                            onRetry: () => Navigator.pop(context),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  colorScheme: colorScheme,
+                                  isPrimary: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditHabitDialog(BuildContext context, Habit habit) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    String selectedColor = habit.color ?? 'pink';
+    String selectedCategory = habit.category != null 
+        ? (habit.category![0].toUpperCase() + habit.category!.substring(1)) 
+        : 'Salud';
+    String selectedFrequency = habit.frequency == 'daily' ? 'Diaria' : 'Semanal';
+    String selectedDifficulty = habit.difficulty == 'medium' ? 'Medio' : 'Fácil';
+    String selectedUnit = habit.targetUnit ?? 'min';
+    
+    TimeOfDay selectedTime = const TimeOfDay(hour: 9, minute: 0);
+    if (habit.reminderTime != null && habit.reminderTime!.contains(':')) {
+      final parts = habit.reminderTime!.split(':');
+      selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    }
+
+    final titleController = TextEditingController(text: habit.title);
+    final descController = TextEditingController(text: habit.description);
+    final targetCountController = TextEditingController(text: habit.targetCount?.toString() ?? '1');
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      pageBuilder: (context, anim1, anim2) => const SizedBox(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: anim1,
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
+                return Dialog(
+                  backgroundColor: Colors.transparent,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Editar Hábito',
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: colorScheme.onSurface.withOpacity(0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Título'),
+                          _buildNeumorphicField(
+                            controller: titleController,
+                            hint: 'Ej: Ejercicio matutino',
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildInputLabel('Descripción'),
+                          _buildNeumorphicField(
+                            controller: descController,
+                            hint: '¿Por qué es importante este hábito?',
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Categoría'),
+                          _buildNeumorphicDropdown(
+                            value: selectedCategory,
+                            items: ['Salud', 'Estudio', 'Finanzas', 'Ocio', 'Social'],
+                            onChanged: (val) => setModalState(() => selectedCategory = val!),
+                            colorScheme: colorScheme,
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Color'),
+                          _buildColorGrid(
+                            selectedColor,
+                            (color) => setModalState(() => selectedColor = color),
+                            colorScheme,
+                          ),
+                          const SizedBox(height: 24),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Frecuencia'),
+                                    _buildNeumorphicDropdown(
+                                      value: selectedFrequency,
+                                      items: ['Diaria', 'Semanal', 'Mensual'],
+                                      onChanged: (val) => setModalState(() => selectedFrequency = val!),
+                                      colorScheme: colorScheme,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Meta (Nº)'),
+                                    _buildNeumorphicField(
+                                      controller: targetCountController,
+                                      hint: 'Ej: 30',
+                                      isNumber: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Unidad'),
+                                    _buildNeumorphicDropdown(
+                                      value: selectedUnit,
+                                      items: ['min', 'páginas', 'L', 'km', 'veces'],
+                                      onChanged: (val) => setModalState(() => selectedUnit = val!),
+                                      colorScheme: colorScheme,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Dificultad'),
+                                    _buildNeumorphicDropdown(
+                                      value: selectedDifficulty,
+                                      items: ['Fácil', 'Medio', 'Difícil'],
+                                      onChanged: (val) => setModalState(() => selectedDifficulty = val!),
+                                      colorScheme: colorScheme,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Recordatorio'),
+                          _buildNeumorphicTimePicker(
+                            context: context,
+                            time: selectedTime,
+                            onTap: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: selectedTime,
+                              );
+                              if (picked != null) {
+                                setModalState(() => selectedTime = picked);
+                              }
+                            },
+                            colorScheme: colorScheme,
+                          ),
+                          const SizedBox(height: 32),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Cancelar',
+                                  onTap: () => Navigator.pop(context),
+                                  colorScheme: colorScheme,
+                                  isPrimary: false,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Guardar',
+                                  onTap: () async {
+                                    final title = titleController.text.trim();
+                                    final description = descController.text.trim();
+                                    final targetCountText = targetCountController.text.trim();
+
+                                    if (title.isEmpty) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => AppWarningWidget(
+                                          message: 'El título del hábito es obligatorio.',
+                                          onDismiss: () => Navigator.pop(context),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    final targetCount = int.tryParse(targetCountText) ?? 1;
+
+                                    final habitData = {
+                                      'title': title,
+                                      'description': description,
+                                      'category': selectedCategory.toLowerCase(),
+                                      'color': selectedColor,
+                                      'frequency': selectedFrequency == 'Diaria' ? 'daily' : 'weekly',
+                                      'target_count': targetCount,
+                                      'target_unit': selectedUnit.trim(),
+                                      'difficulty': selectedDifficulty == 'Medio' ? 'medium' : 'easy',
+                                      'reminder_time': '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                                    };
+                                    
+                                    try {
+                                      await context.read<HabitProvider>().modifyHabit(habit.id, habitData);
+                                      if (mounted) {
+                                        Navigator.pop(context); // Cierra el diálogo de edición
+                                        
+                                        showModalBottomSheet(
+                                          context: context,
+                                          backgroundColor: Colors.transparent,
+                                          barrierColor: Colors.black.withOpacity(0.2),
+                                          builder: (context) => AppSuccessWidget(
+                                            message: 'El hábito "${title}" ha sido actualizado.',
                                             onDismiss: () {
                                               Navigator.pop(context);
                                               context.read<HabitProvider>().resetState();

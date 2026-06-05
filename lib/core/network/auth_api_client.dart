@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../shared/shared_prefs_service.dart';
+import '../shared/auth_service.dart';
 import 'api_client.dart';
 
 class AuthApiClient extends ApiClient {
-  final SharedPreferencesService _prefs;
+  final AuthService _prefs;
 
   AuthApiClient(this._prefs);
 

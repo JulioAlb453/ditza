@@ -54,13 +54,18 @@ class HabitRepositoryImpl implements HabitRepository {
   }
 
   @override
-  Future<Habit> updateHabit(String id) async {
-    final response = await api.patch('/habits/$id/complete', body: jsonEncode({}));
+  Future<Habit> updateHabit(String id, Map<String, dynamic> habitData) async {
+    final response = await api.patch('/habits/$id', body: jsonEncode(habitData));
 
     if (response.statusCode == 200) {
       return HabitModel.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Error al completar hábito');
+      String errorMessage = 'Error al actualizar hábito';
+      try {
+        final errorBody = jsonDecode(response.body);
+        errorMessage = errorBody['message'] ?? errorBody['error'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
     }
   }
 }
