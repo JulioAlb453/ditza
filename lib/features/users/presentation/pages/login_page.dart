@@ -1,4 +1,6 @@
+import 'package:ditza/features/auth/presentation/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../widgets/auth_container.dart';
 
@@ -74,19 +76,43 @@ class _LoginPageState extends State<LoginPage> {
                 onTapDown: (_) => setState(() => _isButtonPressed = true),
                 onTapUp:   (_) => setState(() => _isButtonPressed = false),
                 onTapCancel: () => setState(() => _isButtonPressed = false),
-                onTap: () {
+                onTap: () async {
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+
+                  if (email.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Por favor, completa todos los campos')),
+                    );
+                    return;
+                  }
+
+                  final success = await context.read<AuthProvider>().login(email, password);
+
+                  if (mounted) {
+                    if (success) {
+                      Navigator.pushReplacementNamed(context, AppRoutes.habits);
+                    } else {
+                      final error = context.read<AuthProvider>().errorMessage;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(error ?? 'Error al iniciar sesión')),
+                      );
+                    }
+                  }
                 },
                 child: AuthContainer(
                   isPressed: _isButtonPressed,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   child: Center(
-                    child: Text(
-                      'Entrar',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
+                    child: context.watch<AuthProvider>().isLoading
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            'Entrar',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
                   ),
                 ),
               ),

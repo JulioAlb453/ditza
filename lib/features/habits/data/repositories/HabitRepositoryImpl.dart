@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'package:ditza/core/network/api_client.dart';
+import 'package:ditza/core/network/auth_api_client.dart';
 import '../../domain/entity/habit.dart';
 import '../../domain/repository/HabitRepository.dart';
 import '../models/HabitModel.dart';
 
 class HabitRepositoryImpl implements HabitRepository {
-  final ApiClient api;
+  final AuthApiClient api;
 
   HabitRepositoryImpl({required this.api});
 
@@ -22,8 +22,8 @@ class HabitRepositoryImpl implements HabitRepository {
   }
 
   @override
-  Future<Habit> createHabit(String title) async {
-    final response = await api.post('/habits', body: {'title': title});
+  Future<Habit> createHabit(Map<String, dynamic> habitData) async {
+    final response = await api.post('/habits', body: habitData);
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return HabitModel.fromJson(jsonDecode(response.body));

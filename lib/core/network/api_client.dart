@@ -2,42 +2,50 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  final String baseUrl;
-  final http.Client _client;
+  final String baseUrl = 'http://34.201.68.191:8080';
+  final http.Client _client = http.Client();
 
-  ApiClient({
-    required this.baseUrl,
-    http.Client? client,
-  }) : _client = client ?? http.Client();
-
-  /// GET
-  Future<http.Response> get(String endpoint, {Map<String, String>? headers})  {
+  Future<http.Response> get(String endpoint, {Map<String, String>? headers}) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return  _client.get(url);
+    return await _client.get(url, headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...?headers,
+    });
   }
 
-  /// POST
-  Future<http.Response> post(String endpoint, {Map<String, String>? headers, Object? body})  {
+  Future<http.Response> post(String endpoint, {Map<String, String>? headers, Object? body}) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return  _client.post(
+    return await _client.post(
       url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...?headers,
+      },
       body: body != null ? jsonEncode(body) : null,
     );
   }
 
-  /// PATCH
-  Future<http.Response> patch(String endpoint, {Map<String, String>? headers, Object? body})  {
+  Future<http.Response> patch(String endpoint, {Map<String, String>? headers, Object? body}) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return  _client.patch(
+    return await _client.patch(
       url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...?headers,
+      },
       body: body != null ? jsonEncode(body) : null,
     );
   }
 
-  /// DELETE
-  Future<http.Response> delete(String endpoint, {Map<String, String>? headers})  {
+  Future<http.Response> delete(String endpoint, {Map<String, String>? headers}) async {
     final url = Uri.parse('$baseUrl$endpoint');
-    return  _client.delete(url);
+    return await _client.delete(url, headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...?headers,
+    });
   }
-
 }
