@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/shared/widgets/app_error_widget.dart';
 import '../provider/habitProvider.dart';
 import '../widgets/habit_card.dart';
 
@@ -38,7 +39,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
       case HabitState.loading:
         return const Center(child: CircularProgressIndicator());
       case HabitState.error:
-        return Center(child: Text(provider.errorMessage ?? 'Error desconocido'));
+        return Center(
+          child: AppErrorWidget(
+            message: provider.errorMessage ?? 'Error desconocido',
+            onRetry: () => provider.fetchHabits(),
+          ),
+        );
       case HabitState.loaded:
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -312,38 +318,447 @@ class _HabitsScreenState extends State<HabitsScreen> {
   }
 
   void _showCreateHabitDialog(BuildContext context) {
-    final controller = TextEditingController();
-    showDialog(
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    String selectedColor = 'pink';
+    String selectedCategory = 'Salud';
+    String selectedFrequency = 'Diaria';
+    String selectedDifficulty = 'Medio';
+    String selectedUnit = 'min';
+    TimeOfDay selectedTime = const TimeOfDay(hour: 9, minute: 0);
+
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    final targetCountController = TextEditingController();
+
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Nuevo Hábito'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Ej: Beber 2L de agua',
-            border: OutlineInputBorder(),
+      barrierDismissible: true,
+      barrierLabel: '',
+      pageBuilder: (context, anim1, anim2) => const SizedBox(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: anim1,
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
+                return Dialog(
+                  backgroundColor: Colors.transparent,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Nuevo Hábito',
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: colorScheme.onSurface.withOpacity(0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Título'),
+                          _buildNeumorphicField(
+                            controller: titleController,
+                            hint: 'Ej: Ejercicio matutino',
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildInputLabel('Descripción'),
+                          _buildNeumorphicField(
+                            controller: descController,
+                            hint: '¿Por qué es importante este hábito?',
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Categoría'),
+                          _buildNeumorphicDropdown(
+                            value: selectedCategory,
+                            items: ['Salud', 'Estudio', 'Finanzas', 'Ocio', 'Social'],
+                            onChanged: (val) => setModalState(() => selectedCategory = val!),
+                            colorScheme: colorScheme,
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Color'),
+                          _buildColorGrid(
+                            selectedColor,
+                            (color) => setModalState(() => selectedColor = color),
+                            colorScheme,
+                          ),
+                          const SizedBox(height: 24),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Frecuencia'),
+                                    _buildNeumorphicDropdown(
+                                      value: selectedFrequency,
+                                      items: ['Diaria', 'Semanal', 'Mensual'],
+                                      onChanged: (val) => setModalState(() => selectedFrequency = val!),
+                                      colorScheme: colorScheme,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Meta (Nº)'),
+                                    _buildNeumorphicField(
+                                      controller: targetCountController,
+                                      hint: 'Ej: 30',
+                                      isNumber: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Unidad'),
+                                    _buildNeumorphicDropdown(
+                                      value: selectedUnit,
+                                      items: ['min', 'páginas', 'L', 'km', 'veces'],
+                                      onChanged: (val) => setModalState(() => selectedUnit = val!),
+                                      colorScheme: colorScheme,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInputLabel('Dificultad'),
+                                    _buildNeumorphicDropdown(
+                                      value: selectedDifficulty,
+                                      items: ['Fácil', 'Medio', 'Difícil'],
+                                      onChanged: (val) => setModalState(() => selectedDifficulty = val!),
+                                      colorScheme: colorScheme,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildInputLabel('Recordatorio'),
+                          _buildNeumorphicTimePicker(
+                            context: context,
+                            time: selectedTime,
+                            onTap: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: selectedTime,
+                              );
+                              if (picked != null) {
+                                setModalState(() => selectedTime = picked);
+                              }
+                            },
+                            colorScheme: colorScheme,
+                          ),
+                          const SizedBox(height: 32),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Cancelar',
+                                  onTap: () => Navigator.pop(context),
+                                  colorScheme: colorScheme,
+                                  isPrimary: false,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'Crear',
+                                  onTap: () async {
+                                    final title = titleController.text.trim();
+                                    final description = descController.text.trim();
+                                    final targetCountText = targetCountController.text.trim();
+                                    final targetCount = int.tryParse(targetCountText) ?? 1;
+
+                                    if (title.isNotEmpty) {
+                                      final habitData = {
+                                        'title': title,
+                                        'description': description,
+                                        'category': selectedCategory.toLowerCase(),
+                                        'color': selectedColor,
+                                        'frequency': selectedFrequency == 'Diaria' ? 'daily' : 'weekly',
+                                        'target_count': targetCount,
+                                        'target_unit': selectedUnit.trim(),
+                                        'difficulty': selectedDifficulty == 'Medio' ? 'medium' : 'easy',
+                                        'reminder_time': '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                                      };
+                                      
+                                      try {
+                                        await context.read<HabitProvider>().registerHabit(habitData);
+                                        if (mounted) Navigator.pop(context);
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              backgroundColor: Colors.transparent,
+                                              elevation: 0,
+                                              content: AppErrorWidget(
+                                                message: e.toString().replaceAll('Exception: ', ''),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  },
+                                  colorScheme: colorScheme,
+                                  isPrimary: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+        );
+      },
+    );
+  }
+
+  Widget _buildInputLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+            ),
+      ),
+    );
+  }
+
+  Widget _buildNeumorphicField({
+    required TextEditingController controller,
+    required String hint,
+    bool isNumber = false,
+    int maxLines = 1,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.05),
+            offset: const Offset(4, 4),
+            blurRadius: 8,
+            spreadRadius: -2,
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                context.read<HabitProvider>().registerHabit({
-                  'title': controller.text,
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Crear'),
+          const BoxShadow(
+            color: Colors.white,
+            offset: Offset(-4, -4),
+            blurRadius: 8,
+            spreadRadius: -2,
           ),
         ],
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        maxLines: maxLines,
+        style: Theme.of(context).textTheme.bodyLarge,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.2)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNeumorphicDropdown({
+    required String value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+    required ColorScheme colorScheme,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.05),
+            offset: const Offset(4, 4),
+            blurRadius: 8,
+            spreadRadius: -2,
+          ),
+          const BoxShadow(
+            color: Colors.white,
+            offset: Offset(-4, -4),
+            blurRadius: 8,
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          style: Theme.of(context).textTheme.bodyLarge,
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorGrid(String selected, void Function(String) onSelected, ColorScheme colorScheme) {
+    final colorsMap = {
+      'pink': colorScheme.primary,
+      'lightPink': colorScheme.primaryContainer,
+      'orange': const Color(0xFFFF9800),
+      'blue': const Color(0xFF2196F3),
+      'green': const Color(0xFF4CAF50),
+      'purple': const Color(0xFF9C27B0),
+    };
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: colorsMap.entries.map((e) {
+        final isSelected = e.key == selected;
+        return GestureDetector(
+          onTap: () => onSelected(e.key),
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: e.value,
+              borderRadius: BorderRadius.circular(16),
+              border: isSelected ? Border.all(color: colorScheme.onSurface, width: 2) : null,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withOpacity(0.1),
+                  offset: const Offset(4, 4),
+                  blurRadius: 8,
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildNeumorphicTimePicker({
+    required BuildContext context,
+    required TimeOfDay time,
+    required VoidCallback onTap,
+    required ColorScheme colorScheme,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withOpacity(0.05),
+              offset: const Offset(4, 4),
+              blurRadius: 8,
+              spreadRadius: -2,
+            ),
+            const BoxShadow(
+              color: Colors.white,
+              offset: Offset(-4, -4),
+              blurRadius: 8,
+              spreadRadius: -2,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(time.format(context), style: Theme.of(context).textTheme.bodyLarge),
+            Icon(Icons.access_time, color: colorScheme.onSurface.withOpacity(0.4), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required VoidCallback onTap,
+    required ColorScheme colorScheme,
+    required bool isPrimary,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withOpacity(0.05),
+              offset: const Offset(6, 6),
+              blurRadius: 12,
+            ),
+            const BoxShadow(
+              color: Colors.white,
+              offset: Offset(-6, -6),
+              blurRadius: 12,
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isPrimary ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.5),
+            ),
+          ),
+        ),
       ),
     );
   }

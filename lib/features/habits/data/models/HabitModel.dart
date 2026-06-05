@@ -5,7 +5,6 @@ class HabitModel extends Habit {
     required super.id,
     required super.title,
     super.description,
-    super.emoji,
     super.category,
     super.color,
     super.frequency,
@@ -24,7 +23,6 @@ class HabitModel extends Habit {
       id: json['habit_id']?.toString() ?? json['id']?.toString() ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
-      emoji: json['emoji'] as String?,
       category: json['category'] as String?,
       color: json['color'] as String?,
       frequency: json['frequency'] as String?,
@@ -45,7 +43,6 @@ class HabitModel extends Habit {
     return {
       'title': title,
       'description': description,
-      'emoji': emoji,
       'category': category,
       'color': color,
       'frequency': frequency,

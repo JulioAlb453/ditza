@@ -23,12 +23,24 @@ class HabitRepositoryImpl implements HabitRepository {
 
   @override
   Future<Habit> createHabit(Map<String, dynamic> habitData) async {
-    final response = await api.post('/habits', body: habitData);
+    final response = await api.post('/habits', body: jsonEncode(habitData));
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      return HabitModel.fromJson(jsonDecode(response.body));
+      try {
+        return HabitModel.fromJson(jsonDecode(response.body));
+      } catch (e) {
+        print('Error al mapear HabitModel: $e');
+        throw Exception('Error en el formato de respuesta del servidor');
+      }
     } else {
-      throw Exception('Error al crear hábito');
+      String errorMessage = 'Error al crear hábito';
+      try {
+        final errorBody = jsonDecode(response.body);
+        errorMessage = errorBody['message'] ?? errorBody['error'] ?? errorMessage;
+      } catch (_) {
+        errorMessage = 'Error del servidor: ${response.statusCode}';
+      }
+      throw Exception(errorMessage);
     }
   }
 
@@ -43,7 +55,7 @@ class HabitRepositoryImpl implements HabitRepository {
 
   @override
   Future<Habit> updateHabit(String id) async {
-    final response = await api.patch('/habits/$id/complete', body: {});
+    final response = await api.patch('/habits/$id/complete', body: jsonEncode({}));
 
     if (response.statusCode == 200) {
       return HabitModel.fromJson(jsonDecode(response.body));

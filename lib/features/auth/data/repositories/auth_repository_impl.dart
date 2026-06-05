@@ -11,10 +11,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<String> login(String email, String password) async {
-    final response = await api.post('/auth/login', body: {
+    final response = await api.post('/auth/login', body: jsonEncode({
       'email': email,
       'password': password,
-    });
+    }));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -29,11 +29,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> register(String alias, String email, String password) async {
-    final response = await api.post('/auth/register', body: {
+    final response = await api.post('/auth/register', body: jsonEncode({
       'alias': alias,
       'email': email,
       'password': password,
-    });
+    }));
 
     if (response.statusCode != 201) {
       final errorData = jsonDecode(response.body);

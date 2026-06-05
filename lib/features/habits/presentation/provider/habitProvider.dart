@@ -12,7 +12,7 @@ class HabitProvider with ChangeNotifier {
   List<Habit> _habits = [];
   HabitState _state = HabitState.initial;
   String? _errorMessage;
-
+  
   int get totalHabits => _habits.length;
   int get completedToday => _habits.where((h) {
     if (h.lastCompleteDate == null) return false;
@@ -65,8 +65,9 @@ class HabitProvider with ChangeNotifier {
       _habits.add(newHabit);
       _state = HabitState.loaded;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
       _state = HabitState.error;
+      rethrow; 
     } finally {
       notifyListeners();
     }

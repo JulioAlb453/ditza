@@ -2,7 +2,6 @@ class Habit {
   final String id;
   final String title;
   final String? description;
-  final String? emoji;
   final String? category;
   final String? color;
   final String? frequency;
@@ -19,7 +18,6 @@ class Habit {
     required this.id,
     required this.title,
     this.description,
-    this.emoji,
     this.category,
     this.color,
     this.frequency,
